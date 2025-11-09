@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  kopi-makmur-app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_DEBUG=false
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    command: gunicorn --bind 0.0.0.0:5000 --workers 4 app:app
+
+  # Optional: nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - kopi-makmur-app
+    restart: unless-stopped
