@@ -1,0 +1,635 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<!-- Custom styles for this page -->
+<style>
+    :root {
+        --primary-green: #2c4f42;
+        --secondary-gold: #d4b26a;
+        --cream-bg: #fdf8e1;
+        --light-gray: #f8f9fa;
+        --border-color: #d1d1d1;
+        --text-dark: #000;
+        --text-muted: #6c757d;
+        --shadow-sm: 0 2px 4px rgba(0,0,0,0.04);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+        --shadow-lg: 0 10px 25px rgba(0,0,0,0.08);
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--cream-bg);
+        color: var(--text-dark);
+    }
+
+    /* --- Main Content Layout --- */
+    main {
+        padding-top: 100px;
+        padding-bottom: 2rem;
+    }
+
+    /* --- Modern Metric Cards --- */
+    .metric-card-modern {
+        background-color: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .metric-card-modern:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+    .metric-card-modern .metric-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    .metric-card-modern .metric-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: #fff;
+    }
+    .metric-card-modern.expense .metric-icon { background-color: #dc3545; }
+    .metric-card-modern.transactions .metric-icon { background-color: #0d6efd; }
+    .metric-card-modern.users .metric-icon { background-color: #198754; }
+    
+    .metric-card-modern .metric-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .metric-card-modern .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0;
+    }
+    .metric-card-modern .metric-footer {
+        margin-top: 1rem;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+    .metric-card-modern .metric-footer i {
+        margin-right: 0.25rem;
+    }
+    .metric-card-modern .progress {
+        height: 6px;
+        border-radius: 3px;
+        margin-top: 0.5rem;
+    }
+    
+    /* --- Action Card --- */
+    .action-card {
+        background-color: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+    .action-card .card-header {
+        background-color: var(--primary-green);
+        color: white;
+        font-weight: 600;
+        border-bottom: none;
+        padding: 1rem 1.5rem;
+    }
+    .action-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    /* --- Recent Transactions List --- */
+    .transaction-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .transaction-list li {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background-color 0.2s ease;
+    }
+    .transaction-list li:hover {
+        background-color: var(--light-gray);
+    }
+    .transaction-list li:last-child {
+        border-bottom: none;
+    }
+    .transaction-details .transaction-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    .transaction-details .transaction-date {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+    .transaction-amount {
+        font-weight: 700;
+        color: #dc3545; /* Red for expense */
+    }
+
+    /* --- Chart Container --- */
+    .chart-container {
+        position: relative;
+        height: 350px;
+        width: 100%;
+    }
+
+    /* --- Loading Spinner --- */
+    .loading-spinner {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+    }
+
+    /* --- Error State --- */
+    .chart-error {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+        color: #dc3545;
+        text-align: center;
+        padding: 2rem;
+    }
+    .chart-error i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+</style>
+
+<!-- Page Title -->
+<section class="d-flex justify-content-between flex-wrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+    <h1 class="h2" style="color: var(--primary-green);">Dashboard Cashflow</h1>
+    <p class="text-muted mb-0">Selamat datang kembali, <strong>{{ session.username }}</strong>!</p>
+    <small class="text-muted">{{ month_name | default('Bulan Ini') }}</small>
+</section>
+
+<!-- Modern Stats Cards -->
+<section class="row g-4 mb-5">
+    <div class="col-lg-4 col-md-6">
+        <div class="metric-card-modern revenue">
+            <div class="metric-header">
+                <div class="metric-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <span class="metric-title">Pemasukan Bulan Ini</span>
+            </div>
+            <h2 class="metric-value" id="monthlyRevenue">Rp {{ "{:,.0f}".format(total_revenue) if total_revenue else 0 }}</h2>
+            <div class="metric-footer">
+                <i class="fas fa-calendar me-1"></i>
+                <span>Periode: {{ month_name | default('Bulan Ini') }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-6">
+        <div class="metric-card-modern expense">
+            <div class="metric-header">
+                <div class="metric-icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <span class="metric-title">Pengeluaran Bulan Ini</span>
+            </div>
+            <h2 class="metric-value" id="monthlyExpense">Rp {{ "{:,.0f}".format(total_expense) if total_expense else 0 }}</h2>
+            <div class="metric-footer">
+                <i class="fas fa-calendar me-1"></i>
+                <span>Periode: {{ month_name | default('Bulan Ini') }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-6">
+        <div class="metric-card-modern transactions">
+            <div class="metric-header">
+                <div class="metric-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <span class="metric-title">Total Transaksi Bulan Ini</span>
+            </div>
+            <h2 class="metric-value" id="monthlyTransactions">{{ total_transactions | default(0) }}</h2>
+            <div class="metric-footer">
+                <i class="fas fa-calendar me-1"></i>
+                <span>Periode: {{ month_name | default('Bulan Ini') }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-6">
+        <div class="metric-card-modern users">
+            <div class="metric-header">
+                <div class="metric-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <span class="metric-title">Total User Aktif</span>
+            </div>
+            <h2 class="metric-value" id="totalUsers">{{ total_users | default(0) }}</h2>
+            <div class="metric-footer">
+                <i class="fas fa-user-check me-1"></i>
+                <span>User terdaftar dan aktif</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="row g-4">
+    <!-- Expense Chart -->
+    <div class="col-lg-8">
+        <div class="action-card">
+            <div class="card-header">
+                <i class="fas fa-chart-bar me-2"></i> Grafik Pengeluaran 30 Hari Terakhir
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="expenseChart" data-chart-type="expense" data-chart-period="30days">
+                        <div class="chart-error">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h4>Grafik tidak dapat dimuat</h4>
+                            <p>Browser Anda tidak mendukung elemen canvas. Silakan perbarui browser atau coba browser lain.</p>
+                        </div>
+                    </canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="col-lg-4">
+        <div class="action-card">
+            <div class="card-header">
+                <i class="fas fa-list me-2"></i> Transaksi Terkini
+            </div>
+            <div class="card-body p-0">
+                <ul class="transaction-list">
+                    {% if recent_transactions %}
+                        {% for transaction in recent_transactions %}
+                        <li>
+                            <div class="transaction-details">
+                                <div class="transaction-name">{{ transaction.nama }}</div>
+                                <div class="transaction-date">{{ transaction.tanggal }}</div>
+                            </div>
+                            <div class="transaction-amount">Rp {{ "{:,.0f}".format(transaction.harga) }}</div>
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        <li>
+                            <div class="transaction-details">
+                                <div class="transaction-name">Tidak ada transaksi</div>
+                                <div class="transaction-date">-</div>
+                            </div>
+                            <div class="transaction-amount">-</div>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Format angka ke Rupiah
+    function formatRupiah(amount) {
+        if (!amount) return 'Rp 0';
+        return 'Rp ' + Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    // Fungsi untuk menghasilkan label tanggal 30 hari terakhir
+    function generateLast30DaysLabels() {
+        const labels = [];
+        const today = new Date();
+        
+        for (let i = 29; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(today.getDate() - i);
+            
+            // Format: DD/MM
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            labels.push(`${day}/${month}`);
+        }
+        
+        return labels;
+    }
+
+    // Fungsi untuk mengambil data dari API
+    async function fetchMonthlyData() {
+        try {
+            const response = await fetch('/api/monthly-cashflow');
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const data = await response.json();
+            return data.success ? data : getFallbackData();
+        } catch (error) {
+            console.error('Error fetching monthly data:', error);
+            return getFallbackData();
+        }
+    }
+
+    // Data fallback untuk 30 hari terakhir
+    function getFallbackData() {
+        // Generate labels untuk 30 hari terakhir
+        const labels = generateLast30DaysLabels();
+        
+        // Generate data dummy untuk pengeluaran
+        const expense = Array(30).fill(0).map(() => Math.floor(Math.random() * 5000000) + 1000000);
+        
+        return {
+            labels: labels,
+            income: Array(30).fill(0),
+            expense: expense
+        };
+    }
+
+    // Fungsi yang lebih robust untuk mendapatkan canvas element
+    function getExpenseChartCanvas() {
+        const canvas = document.getElementById('expenseChart');
+        
+        if (!canvas) {
+            console.warn('❌ Canvas element not found with ID "expenseChart"');
+            
+            // Coba cari dengan selector alternatif
+            const alternativeSelectors = [
+                'canvas[data-chart-type="expense"]',
+                '.chart-container canvas',
+                '.action-card canvas'
+            ];
+            
+            for (const selector of alternativeSelectors) {
+                const found = document.querySelector(selector);
+                if (found) {
+                    console.log(`✅ Found canvas using alternative selector: ${selector}`);
+                    return found;
+                }
+            }
+            
+            // Jika masih tidak ditemukan, buat elemen canvas baru
+            console.warn('⚠️ Creating new canvas element dynamically');
+            const chartContainer = document.querySelector('.chart-container');
+            if (chartContainer) {
+                const newCanvas = document.createElement('canvas');
+                newCanvas.id = 'expenseChart';
+                newCanvas.setAttribute('data-chart-type', 'expense');
+                newCanvas.setAttribute('data-chart-period', '30days');
+                chartContainer.appendChild(newCanvas);
+                return newCanvas;
+            }
+            
+            return null;
+        }
+        
+        return canvas;
+    }
+
+    // Fungsi untuk menampilkan error state
+    function showChartError(message) {
+        const chartContainer = document.querySelector('.chart-container');
+        if (chartContainer) {
+            chartContainer.innerHTML = `
+                <div class="chart-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h4>Gagal Memuat Grafik</h4>
+                    <p>${message || 'Terjadi kesalahan saat memuat grafik pengeluaran.'}</p>
+                    <button class="btn btn-primary mt-3" onclick="retryChartInitialization()">
+                        <i class="fas fa-redo me-2"></i>Coba Lagi
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    // Fungsi untuk mencoba ulang inisialisasi chart
+    function retryChartInitialization() {
+        console.log('🔄 Retrying chart initialization...');
+        initializeDashboard();
+    }
+
+    // Fungsi utama untuk inisialisasi dashboard
+    async function initializeDashboard() {
+        console.log('🚀 Initializing admin dashboard...');
+        
+        // Tampilkan loading state
+        showLoadingState();
+
+        try {
+            // Tunggu sebentar untuk memastikan DOM sudah siap
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Ambil data dari API
+            const monthlyData = await fetchMonthlyData();
+            console.log('📊 Monthly data loaded:', monthlyData);
+
+            // Sembunyikan loading state
+            hideLoadingState();
+
+            // Inisialisasi grafik dengan data yang diambil
+            initializeExpenseChart(monthlyData);
+            
+        } catch (error) {
+            console.error('❌ Error initializing dashboard:', error);
+            hideLoadingState();
+            showChartError(error.message);
+        }
+    }
+
+    function showLoadingState() {
+        const chartContainer = document.querySelector('.chart-container');
+        if (chartContainer) {
+            chartContainer.innerHTML = '<div class="loading-spinner"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading chart data...</span></div><div class="mt-2 text-muted">Memuat data grafik...</div></div>';
+        }
+    }
+
+    function hideLoadingState() {
+        const loadingSpinner = document.querySelector('.loading-spinner');
+        if (loadingSpinner) {
+            loadingSpinner.remove();
+        }
+    }
+
+    function initializeExpenseChart(monthlyData) {
+        // Gunakan fungsi yang lebih robust untuk mendapatkan canvas
+        const canvas = getExpenseChartCanvas();
+        
+        if (!canvas) {
+            console.error('❌ Expense chart canvas not found after all attempts');
+            showChartError('Elemen grafik tidak ditemukan. Silakan refresh halaman.');
+            return;
+        }
+
+        try {
+            // Pastikan canvas memiliki konteks yang valid
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                throw new Error('Canvas context is not available');
+            }
+
+            // Pastikan data tersedia
+            const labels = monthlyData.labels || generateLast30DaysLabels();
+            const expenseData = monthlyData.expense || Array(30).fill(0);
+
+            // Hapus chart yang ada jika sudah ada
+            const existingChart = Chart.getChart(canvas);
+            if (existingChart) {
+                existingChart.destroy();
+            }
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Pengeluaran Harian (Rp)',
+                        data: expenseData,
+                        borderColor: '#2c4f42',
+                        backgroundColor: 'rgba(44, 79, 66, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#d4b26a',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#d4b26a',
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += formatRupiah(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxTicksLimit: 10, // Batasi jumlah label yang ditampilkan
+                                autoSkip: true
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return formatRupiah(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            console.log('✅ Expense chart initialized successfully');
+            
+        } catch (error) {
+            console.error('❌ Error initializing expense chart:', error);
+            showChartError('Gagal memuat grafik: ' + error.message);
+        }
+    }
+
+    // Event listener yang lebih robust
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('📄 DOM fully loaded and parsed');
+        initializeDashboard();
+    });
+
+    // Juga coba inisialisasi ketika halaman selesai loading sepenuhnya
+    window.addEventListener('load', function() {
+        console.log('🖼️ All resources finished loading');
+        // Jika chart belum berhasil diinisialisasi, coba lagi
+        if (!Chart.getChart('expenseChart')) {
+            console.log('🔄 Chart not initialized yet, retrying...');
+            setTimeout(initializeDashboard, 500);
+        }
+    });
+
+    // Auto refresh data setiap 2 menit
+    setInterval(async function() {
+        console.log('🔄 Refreshing dashboard data...');
+        try {
+            const monthlyData = await fetchMonthlyData();
+            // Update chart dengan data baru
+            const chart = Chart.getChart('expenseChart');
+            if (chart) {
+                chart.data.labels = monthlyData.labels || generateLast30DaysLabels();
+                chart.data.datasets[0].data = monthlyData.expense || Array(30).fill(0);
+                chart.update('none');
+            }
+        } catch (error) {
+            console.error('Error refreshing data:', error);
+        }
+    }, 120000);
+
+    // Debug tools
+    window.debugDashboard = {
+        reloadChart: function() {
+            console.log('🔄 Manually reloading chart...');
+            initializeDashboard();
+        },
+        getChartData: function() {
+            return fetchMonthlyData();
+        },
+        checkCanvas: function() {
+            const canvas = getExpenseChartCanvas();
+            return {
+                canvas: canvas,
+                exists: !!canvas,
+                id: canvas ? canvas.id : 'none',
+                context: canvas ? canvas.getContext('2d') : 'none'
+            };
+        }
+    };
+
+    console.log('📝 Admin dashboard script loaded');
+</script>
+
+{% endblock %}

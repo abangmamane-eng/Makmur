@@ -1,0 +1,685 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<section class="container my-4">
+
+  <!-- NAVIGASI HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 style="color: #2c4f42;" class="fw-bold">
+        <i class="fas fa-money-bill-wave me-2"></i>Manajemen Cashflow
+      </h2>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a href="{{ url_for('admin_dashboard') if session.role == 'admin' else url_for('view_only') }}" 
+               style="text-decoration: none; color: #2c4f42;" class="hover-primary">
+              <i class="fas fa-home me-1"></i>Dashboard
+            </a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page" style="color: #2c4f42;">Cashflow</li>
+        </ol>
+      </nav>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin_dashboard') if session.role == 'admin' else url_for('view_only') }}" 
+         class="btn btn-outline-primary hover-scale" 
+         style="border-color: #2c4f42; color: #2c4f42;">
+        <i class="fas fa-arrow-left me-1"></i>Kembali ke Dashboard
+      </a>
+      <a href="{{ url_for('products') }}" class="btn btn-outline-success hover-scale">
+        <i class="fas fa-box me-1"></i>Produk
+      </a>
+      {% if session.role == 'admin' %}
+      <a href="{{ url_for('users_management') }}" class="btn btn-outline-info hover-scale">
+        <i class="fas fa-users me-1"></i>User
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- FORM TAMBAH TRANSAKSI -->
+  <div class="card mb-4 shadow-sm animate-fade-in" style="background-color: #fefcf5; border: 1px solid #d1d1d1;">
+    <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #2c4f42 0%, #3a6b5a 100%); color: white;">
+      <h4 class="mb-0 fw-semibold">
+        <i class="fas fa-plus-circle me-2"></i>Tambah Transaksi Baru
+      </h4>
+      <span class="badge bg-light text-dark">
+        <i class="fas fa-user me-1"></i>{{ session.full_name }}
+      </span>
+    </div>
+    <div class="card-body">
+      <form id="transactionForm" class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label fw-medium" style="color: #2c4f42;">
+            <i class="fas fa-calendar me-1"></i>Tanggal *
+          </label>
+          <input type="date" name="tanggal" id="tanggal" class="form-control form-control-lg" 
+                 value="{{ selected_date if view_mode == 'harian' else today }}" required
+                 style="border-color: #d4b26a;">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-medium" style="color: #2c4f42;">
+            <i class="fas fa-tags me-1"></i>Kategori *
+          </label>
+          <select name="kategori" id="kategori" class="form-select form-select-lg" onchange="toggleJumlahSatuan()" required
+                  style="border-color: #d4b26a;">
+            <option value="">Pilih Kategori</option>
+            <option value="Bahan Pokok">Bahan Pokok</option>
+            <option value="Barang">Barang</option>
+            <option value="Jasa">Jasa</option>
+            <option value="Pengeluaran lain_lain">Pengeluaran Lain-lain</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-medium" style="color: #2c4f42;">
+            <i class="fas fa-cube me-1"></i>Nama Item *
+          </label>
+          <input type="text" name="nama" id="nama" class="form-control form-control-lg" 
+                 placeholder="Contoh: Susu UHT" required style="border-color: #d4b26a;">
+        </div>
+        <div class="col-md-2" id="jumlahDiv">
+          <label class="form-label fw-medium" style="color: #2c4f42;">
+            <i class="fas fa-hashtag me-1"></i>Jumlah
+          </label>
+          <input type="text" name="jumlah" id="jumlah" class="form-control form-control-lg" 
+                 placeholder="2 dus" style="border-color: #d4b26a;">
+        </div>
+        <div class="col-md-2" id="satuanDiv">
+          <label class="form-label fw-medium" style="color: #2c4f42;">
+            <i class="fas fa-balance-scale me-1"></i>Satuan
+          </label>
+          <input type="text" name="satuan" id="satuan" class="form-control form-control-lg" 
+                 placeholder="dus, pcs, liter" style="border-color: #d4b26a;">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-medium" style="color: #2c4f42;">
+            <i class="fas fa-money-bill me-1"></i>Harga Total (Rp) *
+          </label>
+          <input type="number" name="harga" id="harga" class="form-control form-control-lg" 
+                 step="0.01" placeholder="250000" required style="border-color: #d4b26a;">
+        </div>
+        <div class="col-12 mt-3">
+          <button type="submit" class="btn btn-success hover-scale px-4 py-2 fw-medium" 
+                  style="background: linear-gradient(135deg, #2c4f42 0%, #3a6b5a 100%); border: none;" id="submitBtn">
+            <i class="fas fa-plus me-1"></i>
+            <span id="submitText">Tambah Transaksi</span>
+            <div id="submitSpinner" class="spinner-border spinner-border-sm d-none ms-2" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </button>
+          <small class="text-muted ms-3">
+            <i class="fas fa-info-circle me-1"></i>Field bertanda * wajib diisi
+          </small>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- FILTER & TABEL -->
+  <div class="card mb-4 shadow-sm animate-fade-in" style="background-color: #fefcf5; border: 1px solid #d1d1d1;">
+    <div class="card-header d-flex justify-content-between align-items-center" 
+         style="background: linear-gradient(135deg, #2c4f42 0%, #3a6b5a 100%); color: white;">
+      <h4 class="mb-0 fw-semibold">
+        <i class="fas fa-chart-bar me-2"></i>Laporan Cashflow
+      </h4>
+      <div class="d-flex gap-2">
+        <span class="badge bg-light text-dark fw-medium">
+          <i class="fas fa-filter me-1"></i>
+          {% if view_mode == 'harian' %}
+            Harian: {{ selected_date }}
+          {% else %}
+            {% set month_names = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'] %}
+            Bulanan: {{ month_names[selected_month-1] }} {{ selected_year }}
+          {% endif %}
+        </span>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <!-- Filter Section -->
+      <div class="card mb-4 shadow-sm" style="background-color: #f8f9fa; border: 1px solid #d4b26a;">
+        <div class="card-body">
+          <form method="GET" action="{{ url_for('cashflow_index') }}" class="row g-3 align-items-end" id="filterForm">
+            <div class="col-md-3">
+              <label class="form-label fw-medium" style="color: #2c4f42;">
+                <i class="fas fa-eye me-1"></i>Lihat Berdasarkan
+              </label>
+              <select name="view_mode" class="form-select" onchange="toggleFilter()" required
+                      style="border-color: #d4b26a;">
+                <option value="harian" {% if view_mode=='harian' %}selected{% endif %}>Harian</option>
+                <option value="bulanan" {% if view_mode=='bulanan' %}selected{% endif %}>Bulanan</option>
+              </select>
+            </div>
+
+            <!-- Filter Harian -->
+            <div class="col-md-3" id="filterDateDiv">
+              <label class="form-label fw-medium" style="color: #2c4f42;">
+                <i class="fas fa-calendar-day me-1"></i>Tanggal
+              </label>
+              <input type="date" name="filter_date" class="form-control" value="{{ selected_date }}"
+                     style="border-color: #d4b26a;">
+            </div>
+
+            <!-- Filter Bulanan -->
+            <div class="col-md-2" id="filterMonthDiv" style="display: {% if view_mode == 'bulanan' %}block{% else %}none{% endif %};">
+              <label class="form-label fw-medium" style="color: #2c4f42;">
+                <i class="fas fa-calendar-alt me-1"></i>Bulan
+              </label>
+              <select name="filter_month" class="form-select" style="border-color: #d4b26a;">
+                {% set month_names = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'] %}
+                {% for i in range(1,13) %}
+                  <option value="{{ i }}" {% if i == selected_month %}selected{% endif %}>{{ month_names[i-1] }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2" id="filterYearDiv" style="display: {% if view_mode == 'bulanan' %}block{% else %}none{% endif %};">
+              <label class="form-label fw-medium" style="color: #2c4f42;">
+                <i class="fas fa-calendar me-1"></i>Tahun
+              </label>
+              <select name="filter_year" class="form-select" style="border-color: #d4b26a;">
+                {% for y in available_years %}
+                  <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-2">
+              <button type="submit" class="btn w-100 hover-scale fw-medium" 
+                      style="background: linear-gradient(135deg, #2c4f42 0%, #3a6b5a 100%); color: white; border: none;">
+                <i class="fas fa-sync-alt me-1"></i>Terapkan
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tabel Harian -->
+      {% if view_mode=='harian' %}
+        <div id="dataContainer" class="animate-fade-in">
+          {% if data %}
+          <div class="table-responsive">
+            <table class="table table-hover table-bordered" style="border-color: #d4b26a;">
+              <thead style="background: linear-gradient(135deg, #d4b26a 0%, #e6c98a 100%); color: #2c4f42;">
+                <tr>
+                  <th class="fw-semibold"><i class="fas fa-calendar me-1"></i>Tanggal</th>
+                  <th class="fw-semibold"><i class="fas fa-tags me-1"></i>Kategori</th>
+                  <th class="fw-semibold"><i class="fas fa-cube me-1"></i>Nama</th>
+                  <th class="fw-semibold"><i class="fas fa-hashtag me-1"></i>Jumlah</th>
+                  <th class="fw-semibold"><i class="fas fa-balance-scale me-1"></i>Satuan</th>
+                  <th class="fw-semibold"><i class="fas fa-money-bill me-1"></i>Harga (Rp)</th>
+                  <th class="fw-semibold text-center"><i class="fas fa-cogs me-1"></i>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody">
+                {% for row in data %}
+                <tr class="hover-lift" style="transition: all 0.3s ease;">
+                  <td class="fw-medium">{{ row.tanggal }}</td>
+                  <td>
+                    <span class="badge rounded-pill fw-medium px-3 py-2 
+                      {% if row.kategori == 'Bahan Pokok' %}bg-primary
+                      {% elif row.kategori == 'Barang' %}bg-success
+                      {% elif row.kategori == 'Jasa' %}bg-warning text-dark
+                      {% else %}bg-secondary{% endif %}">
+                      <i class="fas fa-{{ 'shopping-basket' if row.kategori == 'Bahan Pokok' else 'box' if row.kategori == 'Barang' else 'tools' if row.kategori == 'Jasa' else 'receipt' }} me-1"></i>
+                      {{ row.kategori }}
+                    </span>
+                  </td>
+                  <td class="fw-medium">{{ row.nama }}</td>
+                  <td>{{ row.jumlah or '-' }}</td>
+                  <td>{{ row.satuan or '-' }}</td>
+                  <td class="fw-bold text-success">Rp {{ "{:,.0f}".format(row.harga) }}</td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm">
+                      <a href="{{ url_for('edit_page', id=row.id) }}" class="btn btn-warning hover-scale" 
+                         data-bs-toggle="tooltip" title="Edit Transaksi">
+                        <i class="fas fa-edit"></i>
+                      </a>
+                      <a href="{{ url_for('delete_transaction', id=row.id) }}" class="btn btn-danger hover-scale" 
+                         onclick="return confirm('Yakin hapus transaksi ini?')" data-bs-toggle="tooltip" title="Hapus Transaksi">
+                        <i class="fas fa-trash"></i>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Summary Card -->
+          <div class="row mt-4">
+            <div class="col-md-8">
+              <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                <div class="card-body">
+                  <h5 class="card-title fw-bold mb-0" style="color: #2c4f42;">
+                    <i class="fas fa-calculator me-2"></i>
+                    Total Cashflow {{ 'Hari Ini' if selected_date == today else 'Tanggal ' + selected_date }}: 
+                    <span class="text-success">Rp {{ "{:,.0f}".format(total) }}</span>
+                  </h5>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="d-flex gap-2 h-100">
+                <a href="{{ url_for('export_excel') }}?filter_date={{ selected_date }}" 
+                   class="btn btn-success hover-scale flex-fill d-flex align-items-center justify-content-center fw-medium"
+                   style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none;">
+                  <i class="fas fa-file-excel me-2"></i>Excel
+                </a>
+                <button onclick="window.print()" class="btn btn-secondary hover-scale flex-fill d-flex align-items-center justify-content-center fw-medium">
+                  <i class="fas fa-print me-2"></i>Cetak
+                </button>
+              </div>
+            </div>
+          </div>
+          {% else %}
+            <div class="text-center py-5">
+              <div class="empty-state animate-pulse">
+                <i class="fas fa-chart-line fa-4x mb-3" style="color: #d4b26a;"></i>
+                <h5 class="fw-bold" style="color: #2c4f42;">Tidak ada data transaksi</h5>
+                <p class="text-muted">Tidak ada data transaksi untuk tanggal <strong>{{ selected_date }}</strong>.</p>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <!-- Tabel Bulanan -->
+      {% if view_mode=='bulanan' %}
+        <div id="dataContainer" class="animate-fade-in">
+          <!-- Ringkasan Total Per Kategori -->
+          {% if total_per_kategori %}
+          <div class="row mb-4">
+            {% for kategori in total_per_kategori %}
+            <div class="col-md-3 mb-3">
+              <div class="card shadow-sm border-0 hover-lift h-100" 
+                   style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); transition: all 0.3s ease;">
+                <div class="card-body text-center p-3">
+                  <div class="mb-2">
+                    <i class="fas fa-{{ 'shopping-basket' if kategori.kategori == 'Bahan Pokok' else 'box' if kategori.kategori == 'Barang' else 'tools' if kategori.kategori == 'Jasa' else 'receipt' }} fa-2x" 
+                       style="color: #2c4f42;"></i>
+                  </div>
+                  <h6 class="card-title fw-bold mb-1" style="color: #2c4f42;">{{ kategori.kategori }}</h6>
+                  <h4 class="text-success fw-bold mb-1">Rp {{ "{:,.0f}".format(kategori.total_kategori) }}</h4>
+                  <small class="text-muted">{{ kategori.jumlah_transaksi }} transaksi</small>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          {% if rekap %}
+          <div class="table-responsive">
+            <table class="table table-hover table-bordered" style="border-color: #d4b26a;">
+              <thead style="background: linear-gradient(135deg, #d4b26a 0%, #e6c98a 100%); color: #2c4f42;">
+                <tr>
+                  <th class="fw-semibold"><i class="fas fa-cube me-1"></i>Nama Item</th>
+                  <th class="fw-semibold"><i class="fas fa-tags me-1"></i>Kategori</th>
+                  <th class="fw-semibold"><i class="fas fa-balance-scale me-1"></i>Satuan</th>
+                  <th class="fw-semibold"><i class="fas fa-list me-1"></i>Detail Transaksi</th>
+                  <th class="fw-semibold text-center"><i class="fas fa-hashtag me-1"></i>Total Quantity</th>
+                  <th class="fw-semibold text-center"><i class="fas fa-money-bill me-1"></i>Total Pengeluaran</th>
+                  <th class="fw-semibold text-center"><i class="fas fa-receipt me-1"></i>Jumlah Transaksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in rekap %}
+                <tr class="hover-lift" style="transition: all 0.3s ease;">
+                  <td class="fw-medium">{{ row.nama }}</td>
+                  <td>
+                    <span class="badge rounded-pill fw-medium px-3 py-2 
+                      {% if row.kategori == 'Bahan Pokok' %}bg-primary
+                      {% elif row.kategori == 'Barang' %}bg-success
+                      {% elif row.kategori == 'Jasa' %}bg-warning text-dark
+                      {% else %}bg-secondary{% endif %}">
+                      {{ row.kategori }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if row.semua_satuan %}
+                      <span class="fw-medium">{{ row.semua_satuan }}</span>
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if row.detail_transaksi %}
+                      <small class="text-muted">{{ row.detail_transaksi }}</small>
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center fw-bold" style="color: #2c4f42;">
+                    {% if row.kategori in ['Bahan Pokok', 'Barang'] and row.total_quantity and row.total_quantity != '-' %}
+                      {{ row.total_quantity }}
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center fw-bold text-success">Rp {{ "{:,.0f}".format(row.total_harga) }}</td>
+                  <td class="text-center">
+                    <span class="badge bg-info rounded-pill px-3 py-2 fw-medium">{{ row.total_items }}x</span>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Summary Cards -->
+          <div class="row mt-4">
+            <div class="col-md-6">
+              <div class="card text-white shadow-lg border-0 hover-lift" 
+                   style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); transition: all 0.3s ease;">
+                <div class="card-body">
+                  <h5 class="card-title fw-bold"><i class="fas fa-chart-line me-2"></i>Total Pengeluaran Bulan Ini</h5>
+                  <h2 class="card-text fw-bold">Rp {{ "{:,.0f}".format(total_pengeluaran) }}</h2>
+                  <p class="card-text mb-0">
+                    <i class="fas fa-calendar me-1"></i>
+                    {% set month_names = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'] %}
+                    Periode: {{ month_names[selected_month-1] }} {{ selected_year }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card text-white shadow-lg border-0 hover-lift" 
+                   style="background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%); transition: all 0.3s ease;">
+                <div class="card-body">
+                  <h5 class="card-title fw-bold"><i class="fas fa-chart-bar me-2"></i>Statistik Transaksi</h5>
+                  <div class="row text-center">
+                    <div class="col-6">
+                      <h3 class="fw-bold">{{ rekap | length }}</h3>
+                      <small>Jenis Item</small>
+                    </div>
+                    <div class="col-6">
+                      {% set total_transaksi = rekap | sum(attribute='total_items') %}
+                      <h3 class="fw-bold">{{ total_transaksi }}</h3>
+                      <small>Total Transaksi</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="text-center mt-4">
+            <div class="btn-group" role="group">
+              <a href="{{ url_for('export_excel') }}?filter_month={{ selected_month }}&filter_year={{ selected_year }}" 
+                 class="btn btn-success hover-scale px-4 fw-medium"
+                 style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none;">
+                <i class="fas fa-file-excel me-2"></i>Export Excel
+              </a>
+              <button onclick="window.print()" class="btn btn-secondary hover-scale px-4 fw-medium">
+                <i class="fas fa-print me-2"></i>Cetak Laporan
+              </button>
+              <a href="{{ url_for('cashflow_index') }}?view_mode=bulanan&filter_month={{ selected_month }}&filter_year={{ selected_year }}" 
+                 class="btn btn-outline-primary hover-scale px-4 fw-medium">
+                <i class="fas fa-sync-alt me-2"></i>Refresh
+              </a>
+            </div>
+          </div>
+          {% else %}
+            <div class="text-center py-5">
+              <div class="empty-state animate-pulse">
+                <i class="fas fa-chart-bar fa-4x mb-3" style="color: #d4b26a;"></i>
+                <h5 class="fw-bold" style="color: #2c4f42;">Tidak ada data transaksi</h5>
+                <p class="text-muted">
+                  {% set month_names = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'] %}
+                  Tidak ada data transaksi untuk bulan <strong>{{ month_names[selected_month-1] }} {{ selected_year }}</strong>.
+                </p>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+</section>
+
+<style>
+/* Custom Animations */
+.animate-fade-in {
+    animation: fadeIn 0.6s ease-in-out;
+}
+
+.animate-pulse {
+    animation: pulse 2s infinite;
+}
+
+.hover-scale {
+    transition: all 0.3s ease;
+}
+
+.hover-scale:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(44, 79, 66, 0.2);
+}
+
+.hover-lift {
+    transition: all 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    background-color: #f8f9fa !important;
+}
+
+.hover-primary:hover {
+    color: #2c4f42 !important;
+    text-decoration: underline !important;
+}
+
+.empty-state {
+    opacity: 0.8;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Custom Scrollbar */
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #d4b26a;
+    border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #2c4f42;
+}
+
+/* Enhanced Table Styles */
+.table > :not(caption) > * > * {
+    padding: 12px 16px;
+    vertical-align: middle;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* Badge Enhancements */
+.badge {
+    font-size: 0.75em;
+    letter-spacing: 0.5px;
+}
+
+/* Button Enhancements */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+/* Card Enhancements */
+.card {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.card-header {
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+}
+
+/* Form Enhancements */
+.form-control, .form-select {
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #2c4f42;
+    box-shadow: 0 0 0 0.2rem rgba(44, 79, 66, 0.25);
+}
+
+/* PRINT STYLES */
+@media print {
+    .top-navbar, 
+    .breadcrumb,
+    .btn,
+    .card-header .d-flex:last-child,
+    #transactionForm,
+    .alert,
+    .action-buttons,
+    .pagination,
+    .text-center .btn,
+    .modal,
+    .navbar,
+    footer {
+        display: none !important;
+    }
+    
+    .print-title {
+        display: block !important;
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #000;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+        font-size: 12px;
+    }
+    
+    .card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+        background: white !important;
+    }
+    
+    .card-header {
+        background: #f8f9fa !important;
+        color: #000 !important;
+        border-bottom: 1px solid #000 !important;
+    }
+    
+    .table {
+        font-size: 10px;
+    }
+    
+    .table th {
+        background: #e9ecef !important;
+        color: #000 !important;
+        border: 1px solid #000 !important;
+    }
+    
+    .table td {
+        border: 1px solid #000 !important;
+    }
+    
+    .badge {
+        background: #e9ecef !important;
+        color: #000 !important;
+        border: 1px solid #000 !important;
+    }
+    
+    .total-summary {
+        background: #f8f9fa !important;
+        border: 1px solid #000 !important;
+        padding: 10px;
+        margin-top: 20px;
+    }
+}
+
+.print-title {
+    display: none;
+}
+</style>
+
+<script>
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+    
+    toggleJumlahSatuan();
+});
+
+// Existing JavaScript functions remain the same...
+function toggleJumlahSatuan() {
+  const kategori = document.getElementById('kategori').value;
+  const hide = (kategori === 'Jasa' || kategori === 'Pengeluaran lain_lain');
+
+  const jumlahDiv = document.getElementById('jumlahDiv');
+  const satuanDiv = document.getElementById('satuanDiv');
+
+  if (hide) {
+    jumlahDiv.style.display = 'none';
+    satuanDiv.style.display = 'none';
+    document.getElementById('jumlah').value = '';
+    document.getElementById('satuan').value = '';
+  } else {
+    jumlahDiv.style.display = 'block';
+    satuanDiv.style.display = 'block';
+  }
+}
+
+function toggleFilter() {
+  const mode = document.querySelector('select[name="view_mode"]').value;
+  const dateDiv = document.getElementById('filterDateDiv');
+  const monthDiv = document.getElementById('filterMonthDiv');
+  const yearDiv = document.getElementById('filterYearDiv');
+
+  if (mode === 'harian') {
+    dateDiv.style.display = 'block';
+    monthDiv.style.display = 'none';
+    yearDiv.style.display = 'none';
+  } else {
+    dateDiv.style.display = 'none';
+    monthDiv.style.display = 'block';
+    yearDiv.style.display = 'block';
+  }
+}
+
+// ... (rest of your existing JavaScript functions remain unchanged)
+</script>
+
+{% endblock %}

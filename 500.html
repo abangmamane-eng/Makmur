@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kesalahan Server - Toko Kopi Makmur</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #2c4f42;
+            --secondary-gold: #d4b26a;
+            --cream-bg: #fdf8e1;
+            --danger-color: #dc3545;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--cream-bg) 0%, #f8f9fa 100%);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-dark);
+        }
+        
+        .error-container {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 500px;
+            margin: 2rem;
+            border-top: 4px solid var(--danger-color);
+        }
+        
+        .error-code {
+            font-size: 6rem;
+            font-weight: 700;
+            color: var(--danger-color);
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .error-message {
+            font-size: 1.5rem;
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+        
+        .error-description {
+            color: #6c757d;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .error-icon {
+            font-size: 4rem;
+            color: var(--danger-color);
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--primary-green) 0%, #3a6b5a 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            margin: 0 0.5rem;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(135deg, #3a6b5a 0%, var(--primary-green) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(44, 79, 66, 0.3);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        }
+        
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #5a6268 0%, #6c757d 100%);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-color) 0%, #c82333 100%);
+        }
+        
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #c82333 0%, var(--danger-color) 100%);
+        }
+        
+        .support-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-left: 4px solid var(--secondary-gold);
+        }
+        
+        .support-info h5 {
+            color: var(--primary-green);
+            margin-bottom: 0.5rem;
+        }
+        
+        .coffee-bean {
+            position: absolute;
+            width: 35px;
+            height: 18px;
+            background: var(--primary-green);
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: float 20s infinite linear;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .error-container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+            
+            .error-code {
+                font-size: 4rem;
+            }
+            
+            .error-message {
+                font-size: 1.25rem;
+            }
+            
+            .error-icon {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background coffee beans -->
+    <div class="coffee-bean" style="top: 10%; left: 10%; animation-delay: 0s;"></div>
+    <div class="coffee-bean" style="top: 20%; left: 80%; animation-delay: 5s;"></div>
+    <div class="coffee-bean" style="top: 50%; left: 15%; animation-delay: 10s;"></div>
+    <div class="coffee-bean" style="top: 70%; left: 85%; animation-delay: 15s;"></div>
+    
+    <div class="error-container">
+        <div class="error-icon">
+            <i class="fas fa-server"></i>
+        </div>
+        <div class="error-code">500</div>
+        <div class="error-message">
+            <i class="fas fa-exclamation-triangle me-2"></i>Kesalahan Server Internal
+        </div>
+        <div class="error-description">
+            Maaf, terjadi kesalahan pada server. Tim teknis kami telah dimaklumkan dan sedang memperbaiki masalah ini. Silakan coba lagi dalam beberapa saat.
+        </div>
+        
+        <div class="support-info">
+            <h5><i class="fas fa-info-circle me-2"></i>Butuh Bantuan?</h5>
+            <p class="mb-0">Jika masalah ini berlanjut, silakan hubungi administrator atau tim support kami.</p>
+        </div>
+        
+        <div>
+            <a href="/" class="btn">
+                <i class="fas fa-home me-2"></i>Kembali ke Beranda
+            </a>
+            <button onclick="window.location.reload()" class="btn btn-secondary">
+                <i class="fas fa-redo me-2"></i>Coba Lagi
+            </button>
+            <a href="/login" class="btn btn-danger">
+                <i class="fas fa-sign-in-alt me-2"></i>Login Ulang
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        // Auto refresh after 30 seconds
+        setTimeout(function() {
+            if (confirm('Halaman masih belum bisa diakses. Apakah Anda ingin mencoba memuat ulang halaman?')) {
+                window.location.reload();
+            }
+        }, 30000);
+        
+        // Report error to console
+        console.error('500 Internal Server Error occurred at:', new Date().toISOString());
+    </script>
+</body>
+</html>

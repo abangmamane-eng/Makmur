@@ -1,0 +1,96 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<section class="container my-5">
+
+  <div class="card shadow">
+    <div class="card-header bg-warning text-white">
+      <h4 class="mb-0">✏️ Edit Transaksi</h4>
+    </div>
+    <div class="card-body">
+      <form action="/update/{{ transaksi.id }}" method="POST" class="row g-3" id="editForm">
+        <div class="col-md-3">
+          <label class="form-label fw-bold">📅 Tanggal</label>
+          <input type="date" name="tanggal" value="{{ transaksi.tanggal }}" class="form-control" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold">📂 Kategori</label>
+          <select name="kategori" id="kategori" class="form-select" onchange="toggleJumlahSatuan()" required>
+            <option value="Bahan Pokok" {% if transaksi.kategori == 'Bahan Pokok' %}selected{% endif %}>Bahan Pokok</option>
+            <option value="Barang" {% if transaksi.kategori == 'Barang' %}selected{% endif %}>Barang</option>
+            <option value="Jasa" {% if transaksi.kategori == 'Jasa' %}selected{% endif %}>Jasa</option>
+            <option value="Pengeluaran lain_lain" {% if transaksi.kategori == 'Pengeluaran lain_lain' %}selected{% endif %}>Pengeluaran lain_lain</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-bold">📝 Nama Item</label>
+          <input type="text" name="nama" value="{{ transaksi.nama }}" class="form-control" required>
+        </div>
+        <div class="col-md-3" id="jumlahDiv">
+          <label class="form-label fw-bold">🔢 Jumlah</label>
+          <input type="text" name="jumlah" value="{{ transaksi.jumlah }}" class="form-control" placeholder="2 dus">
+        </div>
+        <div class="col-md-3" id="satuanDiv">
+          <label class="form-label fw-bold">📏 Satuan</label>
+          <input type="text" name="satuan" value="{{ transaksi.satuan }}" class="form-control" placeholder="dus, pcs, liter">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold">💰 Harga (Rp)</label>
+          <input type="number" name="harga" step="0.01" value="{{ transaksi.harga }}" class="form-control" required>
+        </div>
+        <div class="col-12 mt-4 pt-3 border-top">
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary fw-bold px-4">
+              💾 Simpan Perubahan
+            </button>
+            <a href="{{ url_for('admin_dashboard') if session.role == 'admin' else url_for('view_only') }}" class="btn btn-secondary fw-bold px-4">
+              ↩️ Kembali ke Dashboard
+            </a>
+            <a href="{{ url_for('cashflow_index') }}" class="btn btn-outline-info fw-bold px-4">
+              📊 Kembali ke Cashflow
+            </a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</section>
+
+<script>
+function toggleJumlahSatuan() {
+  const kategori = document.getElementById('kategori').value;
+  const hide = (kategori === 'Jasa' || kategori === 'Pengeluaran lain_lain');
+
+  const jumlahDiv = document.getElementById('jumlahDiv');
+  const satuanDiv = document.getElementById('satuanDiv');
+
+  if (hide) {
+    jumlahDiv.style.display = 'none';
+    satuanDiv.style.display = 'none';
+  } else {
+    jumlahDiv.style.display = 'block';
+    satuanDiv.style.display = 'block';
+  }
+}
+
+// Validasi form
+document.getElementById('editForm').addEventListener('submit', function(e) {
+  const harga = document.querySelector('input[name="harga"]').value;
+  
+  if (!harga || parseFloat(harga) <= 0) {
+    alert('Harga harus lebih dari 0!');
+    e.preventDefault();
+    return false;
+  }
+  
+  return true;
+});
+
+// Jalankan saat halaman dimuat
+document.addEventListener('DOMContentLoaded', function() {
+  toggleJumlahSatuan();
+});
+</script>
+
+{% endblock %}

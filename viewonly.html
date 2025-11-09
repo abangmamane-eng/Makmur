@@ -1,0 +1,906 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<style>
+    :root {
+        --primary-green: #2c4f42;
+        --secondary-gold: #d4b26a;
+        --cream-bg: #fdf8e1;
+        --light-gray: #f8f9fa;
+        --border-color: #e9ecef;
+        --text-dark: #212529;
+        --text-muted: #6c757d;
+        --success: #198754;
+        --danger: #dc3545;
+        --warning: #ffc107;
+        --info: #0dcaf0;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--cream-bg);
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232c4f42' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        color: var(--text-dark);
+        line-height: 1.6;
+    }
+
+    /* --- Restriction Notice --- */
+    .restriction-notice {
+        background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+        border-left: 4px solid var(--secondary-gold);
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: flex-start;
+        transition: transform 0.2s ease;
+    }
+    
+    .restriction-notice:hover {
+        transform: translateY(-2px);
+    }
+    
+    .restriction-notice i {
+        color: var(--secondary-gold);
+        margin-right: 12px;
+        font-size: 1.25rem;
+        margin-top: 2px;
+    }
+
+    /* --- Metric Cards --- */
+    .metric-card {
+        background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .metric-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-green), var(--secondary-gold));
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .metric-card:hover::before {
+        transform: scaleX(1);
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+    }
+    
+    .metric-card .metric-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #fff;
+        transition: transform 0.3s ease;
+        margin-bottom: 1rem;
+    }
+    
+    .metric-card:hover .metric-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+    
+    .metric-card.info .metric-icon { 
+        background: linear-gradient(135deg, var(--info), #0aa8c7); 
+    }
+    
+    .metric-card.warning .metric-icon { 
+        background: linear-gradient(135deg, var(--warning), #e0a800); 
+    }
+    
+    .metric-card .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0;
+        line-height: 1.2;
+    }
+    
+    .metric-card .metric-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-card .metric-description {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+
+    /* --- Chart Cards --- */
+    .chart-card {
+        background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .chart-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    .chart-card .card-header {
+        background-color: var(--primary-green);
+        color: white;
+        font-weight: 600;
+        border-bottom: none;
+        padding: 1rem 1.5rem;
+    }
+    
+    .chart-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+
+    /* --- Action Card --- */
+    .action-card {
+        background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+    
+    .action-card .card-header {
+        background-color: var(--primary-green);
+        color: white;
+        font-weight: 600;
+        border-bottom: none;
+        padding: 1rem 1.5rem;
+    }
+    
+    .action-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .action-card .btn-action {
+        background: linear-gradient(135deg, var(--secondary-gold), #c4a15f);
+        border: none;
+        color: var(--text-dark);
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .action-card .btn-action::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.5s;
+    }
+    
+    .action-card .btn-action:hover::before {
+        left: 100%;
+    }
+    
+    .action-card .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(212, 178, 106, 0.4);
+        color: var(--text-dark);
+    }
+
+    /* --- Additional Styling --- */
+    .section-title {
+        font-weight: 700;
+        color: var(--primary-green);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--secondary-gold);
+        display: inline-block;
+    }
+    
+    .card-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .feature-list {
+        list-style: none;
+        padding-left: 0;
+    }
+    
+    .feature-list li {
+        padding: 0.5rem 0;
+        display: flex;
+        align-items: flex-start;
+    }
+    
+    .feature-list li i {
+        color: var(--secondary-gold);
+        margin-right: 0.75rem;
+        margin-top: 0.25rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    /* Loading Spinner */
+    .loading-spinner {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+    }
+
+    .chart-placeholder {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 300px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        color: #6c757d;
+        font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+        .metric-card .metric-value {
+            font-size: 1.75rem;
+        }
+        
+        .chart-container {
+            height: 250px;
+        }
+        
+        .restriction-notice {
+            padding: 1rem;
+        }
+    }
+</style>
+
+<!-- Restriction Notice -->
+<div class="restriction-notice fade-in">
+    <i class="fas fa-info-circle"></i>
+    <div>
+        <strong>Akses Terbatas:</strong> Anda hanya dapat melihat data. Untuk menambah, mengedit, atau menghapus data, hubungi administrator.
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-5 fade-in">
+    <div class="col-lg-6 col-md-6">
+        <div class="metric-card info">
+            <div class="metric-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <p class="metric-label">Total User</p>
+            <p class="metric-value">{{ total_users }}</p>
+            <p class="metric-description">Jumlah pengguna sistem</p>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-6">
+        <div class="metric-card warning">
+            <div class="metric-icon">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <p class="metric-label">Pengeluaran Bulan Ini</p>
+            <p class="metric-value">Rp {{ "{:,.0f}".format(total_expense) if total_expense else 0 }}</p>
+            <p class="metric-description">Total pengeluaran operasional ({{ month_name | default('Bulan Ini') }})</p>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row g-4 mb-5 fade-in">
+    <div class="col-12">
+        <h3 class="section-title">Analisis Cashflow</h3>
+    </div>
+    
+    <!-- Cashflow Trend Chart -->
+    <div class="col-lg-8">
+        <div class="chart-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-line me-2"></i>Trend Cashflow 6 Bulan Terakhir</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="cashflowTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cashflow Distribution Chart -->
+    <div class="col-lg-4">
+        <div class="chart-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-pie me-2"></i>Distribusi Pengeluaran</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="expenseDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Comparison Chart -->
+<div class="row g-4 mb-5 fade-in">
+    <div class="col-12">
+        <div class="chart-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-bar me-2"></i>Perbandingan Pemasukan vs Pengeluaran</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="incomeExpenseChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Only Content -->
+<div class="row fade-in">
+    <div class="col-12">
+        <div class="action-card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-eye me-2"></i>Dashboard View Only</h5>
+            </div>
+            <div class="card-body">
+                <p>Anda login sebagai <strong>{{ session.full_name }}</strong> dengan role <strong>{{ session.role }}</strong>.</p>
+                <p>Fitur yang tersedia untuk Anda:</p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> Melihat dashboard dengan analisis cashflow</li>
+                    <li><i class="fas fa-check-circle"></i> Melihat laporan cashflow (read-only)</li>
+                    <li><i class="fas fa-check-circle"></i> Melihat grafik dan statistik keuangan</li>
+                </ul>
+                <div class="mt-4">
+                    <a href="{{ url_for('cashflow_index') }}" class="btn btn-action">
+                        <i class="fas fa-money-bill-wave me-2"></i>Lihat Detail Cashflow
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Format angka ke Rupiah
+function formatRupiah(amount) {
+    if (!amount) return 'Rp 0';
+    return 'Rp ' + Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+// Fungsi untuk mengambil data cashflow bulanan
+async function fetchMonthlyData() {
+    try {
+        const response = await fetch('/api/monthly-cashflow');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        console.log('📊 Monthly data from API:', data);
+        return data;
+    } catch (error) {
+        console.error('❌ Error fetching monthly data:', error);
+        return getFallbackMonthlyData();
+    }
+}
+
+// Data fallback
+function getFallbackMonthlyData() {
+    return {
+        labels: ['Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov'],
+        income: [0, 0, 0, 0, 0, 0],
+        expense: [0, 0, 0, 0, 22428072, 3266942],
+        success: false
+    };
+}
+
+// Fungsi untuk mengambil data distribusi pengeluaran
+async function fetchExpenseDistribution() {
+    try {
+        const response = await fetch('/api/expense-distribution');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        console.log('📈 Distribution data from API:', data);
+        return data;
+    } catch (error) {
+        console.error('❌ Error fetching expense distribution:', error);
+        return {
+            labels: ['Bahan Pokok', 'Barang', 'Pengeluaran lain_lain'],
+            data: [90.9, 5.3, 3.8],
+            success: false
+        };
+    }
+}
+
+// Fungsi untuk mengambil statistik dashboard
+async function fetchDashboardStats() {
+    try {
+        const response = await fetch('/api/dashboard-stats');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        console.log('📋 Dashboard stats from API:', data);
+        return data;
+    } catch (error) {
+        console.error('❌ Error fetching dashboard stats:', error);
+        return {
+            monthly_income: 0,
+            monthly_expense: 3266942,
+            monthly_transactions: 34,
+            avg_daily_expense: 108898,
+            current_month: 'November 2025',
+            success: false
+        };
+    }
+}
+
+// Inisialisasi grafik setelah halaman dimuat
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('🚀 DOM Content Loaded - Initializing dashboard...');
+    
+    // Periksa apakah Chart.js tersedia
+    if (typeof Chart === 'undefined') {
+        console.error('❌ Chart.js is not loaded!');
+        showErrorState('Chart.js gagal dimuat');
+        return;
+    }
+    
+    console.log('✅ Chart.js is available');
+
+    // Tampilkan loading state
+    showLoadingState();
+
+    try {
+        console.log('📥 Fetching data from APIs...');
+        
+        // Ambil data dari berbagai endpoint
+        const [monthlyData, distributionData, dashboardStats] = await Promise.all([
+            fetchMonthlyData(),
+            fetchExpenseDistribution(),
+            fetchDashboardStats()
+        ]);
+
+        console.log('✅ All data loaded:', { 
+            monthlyData, 
+            distributionData, 
+            dashboardStats 
+        });
+
+        // Sembunyikan loading state
+        hideLoadingState();
+
+        // Update metric cards dengan data terbaru
+        updateMetricCards(dashboardStats);
+
+        // Inisialisasi grafik dengan data yang diambil
+        initializeCharts(monthlyData, distributionData);
+        
+    } catch (error) {
+        console.error('❌ Error initializing dashboard:', error);
+        hideLoadingState();
+        showErrorState('Gagal memuat data: ' + error.message);
+        
+        // Tetap inisialisasi chart dengan data fallback
+        initializeCharts(getFallbackMonthlyData(), {
+            labels: ['Bahan Pokok', 'Barang', 'Pengeluaran lain_lain'],
+            data: [90.9, 5.3, 3.8],
+            success: false
+        });
+    }
+});
+
+// Loading state yang TIDAK menghapus canvas
+function showLoadingState() {
+    console.log('🔄 Showing loading state (without removing canvas)...');
+    const chartContainers = document.querySelectorAll('.chart-container');
+    
+    // Pastikan canvas elements ada
+    ensureCanvasElements();
+    
+    // Tambahkan overlay loading tanpa menghapus canvas
+    chartContainers.forEach(container => {
+        // Cek apakah sudah ada loading spinner
+        if (!container.querySelector('.loading-overlay')) {
+            const overlay = document.createElement('div');
+            overlay.className = 'loading-overlay';
+            overlay.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(255,255,255,0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10;
+            `;
+            overlay.innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading chart data...</span>
+                    </div>
+                    <div class="mt-2 text-muted">Memuat data grafik...</div>
+                </div>
+            `;
+            container.style.position = 'relative';
+            container.appendChild(overlay);
+        }
+    });
+}
+
+function hideLoadingState() {
+    console.log('✅ Hiding loading state...');
+    const loadingOverlays = document.querySelectorAll('.loading-overlay');
+    loadingOverlays.forEach(overlay => overlay.remove());
+}
+
+// Fungsi untuk memastikan canvas elements ada
+function ensureCanvasElements() {
+    const canvasIds = ['cashflowTrendChart', 'expenseDistributionChart', 'incomeExpenseChart'];
+    const containers = document.querySelectorAll('.chart-container');
+    
+    canvasIds.forEach((canvasId, index) => {
+        if (index < containers.length) {
+            const container = containers[index];
+            let canvas = document.getElementById(canvasId);
+            
+            if (!canvas) {
+                // Buat canvas jika tidak ada
+                canvas = document.createElement('canvas');
+                canvas.id = canvasId;
+                container.appendChild(canvas);
+                console.log('✅ Created canvas:', canvasId);
+            }
+        }
+    });
+}
+
+function showErrorState(message) {
+    console.error('❌ Showing error state:', message);
+    const chartContainers = document.querySelectorAll('.chart-container');
+    chartContainers.forEach(container => {
+        container.innerHTML = '<div class="chart-placeholder"><i class="fas fa-exclamation-triangle fa-2x mb-2 text-danger"></i><div class="text-danger">' + message + '</div><small class="text-muted">Silakan refresh halaman</small></div>';
+    });
+}
+
+function updateMetricCards(stats) {
+    console.log('🔄 Updating metric cards with:', stats);
+    
+    // Update pengeluaran bulan ini
+    const expenseElement = document.querySelector('.metric-card.warning .metric-value');
+    if (expenseElement) {
+        expenseElement.textContent = formatRupiah(stats.total_expense);
+        console.log('✅ Updated expense card:', formatRupiah(stats.total_expense));
+    }
+    
+    // Update deskripsi dengan info bulan
+    const expenseDesc = document.querySelector('.metric-card.warning .metric-description');
+    if (expenseDesc && stats.current_month) {
+        expenseDesc.textContent = 'Pengeluaran ' + stats.current_month;
+    }
+}
+
+function initializeCharts(monthlyData, distributionData) {
+    console.log('🎨 Initializing charts with data:', { 
+        monthlyData, 
+        distributionData 
+    });
+
+    // Validasi data
+    if (!monthlyData || !distributionData) {
+        console.error('❌ No data provided for charts');
+        showErrorState('Data tidak tersedia');
+        return;
+    }
+
+    // Pastikan canvas elements ada sebelum inisialisasi
+    ensureCanvasElements();
+
+    // Pastikan data success
+    const monthlyLabels = monthlyData.labels || ['Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov'];
+    const monthlyIncome = monthlyData.income || [0, 0, 0, 0, 0, 0];
+    const monthlyExpense = monthlyData.expense || [0, 0, 0, 0, 0, 0];
+    
+    const distributionLabels = distributionData.labels || ['Bahan Pokok', 'Barang', 'Pengeluaran lain_lain'];
+    const distributionValues = distributionData.data || [90.9, 5.3, 3.8];
+
+    console.log('📈 Processed chart data:', {
+        labels: monthlyLabels,
+        income: monthlyIncome,
+        expense: monthlyExpense,
+        distribution: distributionValues
+    });
+
+    // Inisialisasi masing-masing chart
+    initializeTrendChart(monthlyLabels, monthlyIncome, monthlyExpense);
+    initializeDistributionChart(distributionLabels, distributionValues);
+    initializeComparisonChart(monthlyLabels, monthlyIncome, monthlyExpense);
+
+    console.log('✅ All charts initialized successfully');
+}
+
+function initializeTrendChart(labels, income, expense) {
+    console.log('📈 Initializing trend chart...');
+    const trendCtx = document.getElementById('cashflowTrendChart');
+    
+    if (!trendCtx) {
+        console.error('❌ Trend chart canvas not found');
+        return;
+    }
+
+    try {
+        // Clear existing chart
+        if (trendCtx.chart) {
+            trendCtx.chart.destroy();
+        }
+
+        const chart = new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Pemasukan',
+                        data: income,
+                        borderColor: '#198754',
+                        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Pengeluaran',
+                        data: expense,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + formatRupiah(context.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatRupiah(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Simpan reference ke chart
+        trendCtx.chart = chart;
+        console.log('✅ Trend chart initialized successfully');
+        
+    } catch (error) {
+        console.error('❌ Error initializing trend chart:', error);
+        trendCtx.innerHTML = '<div class="chart-placeholder"><i class="fas fa-exclamation-triangle fa-2x mb-2 text-danger"></i><div class="text-danger">Gagal memuat grafik trend</div><small class="text-muted">' + error.message + '</small></div>';
+    }
+}
+
+function initializeDistributionChart(labels, data) {
+    console.log('📊 Initializing distribution chart...');
+    const distributionCtx = document.getElementById('expenseDistributionChart');
+    
+    if (!distributionCtx) {
+        console.error('❌ Distribution chart canvas not found');
+        return;
+    }
+
+    try {
+        // Clear existing chart
+        if (distributionCtx.chart) {
+            distributionCtx.chart.destroy();
+        }
+
+        const chart = new Chart(distributionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: ['#2c4f42', '#d4b26a', '#198754', '#0dcaf0'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                return label + ': ' + value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Simpan reference ke chart
+        distributionCtx.chart = chart;
+        console.log('✅ Distribution chart initialized successfully');
+        
+    } catch (error) {
+        console.error('❌ Error initializing distribution chart:', error);
+        distributionCtx.innerHTML = '<div class="chart-placeholder"><i class="fas fa-exclamation-triangle fa-2x mb-2 text-danger"></i><div class="text-danger">Gagal memuat grafik distribusi</div></div>';
+    }
+}
+
+function initializeComparisonChart(labels, income, expense) {
+    console.log('📊 Initializing comparison chart...');
+    const comparisonCtx = document.getElementById('incomeExpenseChart');
+    
+    if (!comparisonCtx) {
+        console.error('❌ Comparison chart canvas not found');
+        return;
+    }
+
+    try {
+        // Clear existing chart
+        if (comparisonCtx.chart) {
+            comparisonCtx.chart.destroy();
+        }
+
+        const chart = new Chart(comparisonCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Pemasukan',
+                        data: income,
+                        backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                        borderColor: '#198754',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Pengeluaran',
+                        data: expense,
+                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                        borderColor: '#dc3545',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + formatRupiah(context.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatRupiah(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Simpan reference ke chart
+        comparisonCtx.chart = chart;
+        console.log('✅ Comparison chart initialized successfully');
+        
+    } catch (error) {
+        console.error('❌ Error initializing comparison chart:', error);
+        comparisonCtx.innerHTML = '<div class="chart-placeholder"><i class="fas fa-exclamation-triangle fa-2x mb-2 text-danger"></i><div class="text-danger">Gagal memuat grafik perbandingan</div></div>';
+    }
+}
+
+// Debug tools
+window.debugCharts = {
+    reloadCharts: function() {
+        console.log('🔄 Manually reloading charts...');
+        document.dispatchEvent(new Event('DOMContentLoaded'));
+    },
+    getChartData: function() {
+        return Promise.all([
+            fetchMonthlyData(),
+            fetchExpenseDistribution(),
+            fetchDashboardStats()
+        ]);
+    },
+    checkChartJS: function() {
+        console.log('🔍 Checking Chart.js:', {
+            available: typeof Chart !== 'undefined',
+            version: Chart?.version || 'Not available'
+        });
+        return typeof Chart !== 'undefined';
+    }
+};
+
+console.log('📝 Chart initialization script loaded');
+</script>
+
+{% endblock %}
